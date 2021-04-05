@@ -31,10 +31,10 @@ async def del_filterz(client, message):
         await note_.edit("`Give A Filter Name!`")
         return
     note_name = note_name.lower()
-    if not filters_info(note_name, message.chat.id):
+    if not await filters_info(note_name, message.chat.id):
         await note_.edit("`Filter Not Found!`")
         return
-    del_filters(note_name, message.chat.id)
+    await del_filters(note_name, message.chat.id)
     await note_.edit(f"`Filter {note_name} Deleted Successfully!`")
 
 
@@ -44,7 +44,7 @@ async def del_filterz(client, message):
 )
 async def show_filters(client, message):
     pablo = await edit_or_reply(message, "`Processing..`")
-    poppy = all_filters(message.chat.id)
+    poppy = await all_filters(message.chat.id)
     if poppy is False:
         await pablo.edit("`No Filters Found In This Chat...`")
         return
@@ -76,30 +76,33 @@ async def s_filters(client, message):
     note_name = note_name.lower()
     msg = message.reply_to_message
     copied_msg = await msg.copy(Config.LOG_GRP)
-    add_filters(note_name, message.chat.id, copied_msg.message_id)
+    await add_filters(note_name, message.chat.id, copied_msg.message_id)
     await note_.edit(f"`Done! {note_name} Added To Filters List!`")
 
 
 @listen(filters.incoming & ~filters.edited & filters.group)
 async def filter_s(client, message):
-    if all_filters(message.chat.id):
-        pass
-    else:
-        message.continue_propagation()
     owo = message.text
-    if owo is None:
+    al_fill = []
+    if not owo:
         message.continue_propagation()
+        return
+    al_fil = await all_filters(message.chat.id)
+    if not al_fil:
+        message.continue_propagation()
+        return
+    for all_fil in al_fil:
+        al_fill.append(all_fil.get('keyword'))
     owoo = owo.lower()
-    tges = owoo.split(" ")
-    for owo in tges:
-        if filters_info(owo, message.chat.id):
-            sed = filters_info(owo, message.chat.id)
+    if owoo in al_fill:
+        f_info = await filters_info(owoo, message.chat.id)
+        if f_info:
             await client.copy_message(
-                from_chat_id=Config.LOG_GRP,
-                chat_id=message.chat.id,
-                message_id=sed["msg_id"],
-                reply_to_message_id=message.message_id,
-            )
+                    from_chat_id=Config.LOG_GRP,
+                    chat_id=message.chat.id,
+                    message_id=f_info["msg_id"],
+                    reply_to_message_id=message.message_id,
+             )
     message.continue_propagation()
 
 
@@ -109,9 +112,9 @@ async def filter_s(client, message):
 )
 async def del_all_filters(client, message):
     pablo = await edit_or_reply(message, "`Processing...`")
-    poppy = all_filters(message.chat.id)
+    poppy = await all_filters(message.chat.id)
     if poppy is False:
         await pablo.edit("`No Filters Found In This Chat...`")
         return
-    filters_del(message.chat.id)
+    await filters_del(message.chat.id)
     await pablo.edit("Deleted All The Filters Successfully!!")

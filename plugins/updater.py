@@ -31,19 +31,24 @@ async def update_it(client, message):
     msg_ = await edit_or_reply(message, "`Updating Please Wait!`")
     try:
         repo = Repo()
+    except GitCommandError:
+        return await msg_.edit("`Invalid Git Command. Please Report This Bug To @FridayOT`")
     except InvalidGitRepositoryError:
         repo = Repo.init()
-    if "upstream" in repo.remotes:
-        origin = repo.remote("upstream")
-    else:
-        origin = repo.create_remote("upstream", REPO_)
-    origin.fetch()
-    repo.create_head(Config.U_BRANCH, origin.refs.master)
-    repo.heads.master.set_tracking_branch(origin.refs.master)
-    repo.heads.master.checkout(True)
+        if "upstream" in repo.remotes:
+          origin = repo.remote("upstream")
+        else:
+          origin = repo.create_remote("upstream", REPO_)
+        origin.fetch()
+        repo.create_head(Config.U_BRANCH, origin.refs.master)
+        repo.heads.master.set_tracking_branch(origin.refs.master)
+        repo.heads.master.checkout(True)
     if repo.active_branch.name != Config.U_BRANCH:
-        await msg_.edit(f"`Seems Like You Are Using Custom Branch - {repo.active_branch.name}! Please Switch To {Config.U_BRANCH} To Make This Updater Function!`")
-        return
+        return await msg_.edit(f"`Seems Like You Are Using Custom Branch - {repo.active_branch.name}! Please Switch To {Config.U_BRANCH} To Make This Updater Function!`")
+    try:
+        repo.create_remote("upstream", REPO_)
+    except BaseException:
+        pass
     ups_rem = repo.remote("upstream")
     ups_rem.fetch(Config.U_BRANCH)
     if not Config.HEROKU_URL:
